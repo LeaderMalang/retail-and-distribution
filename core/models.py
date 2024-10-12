@@ -9,8 +9,49 @@ class Product(models.Model):
     quantity = models.IntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def _str_(self):
+    def __str__(self):
         return self.name
+
+class InventoryBatch(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    batch_number = models.CharField(max_length=50)
+    expiration_date = models.DateField()
+    quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"Batch {self.batch_number} of {self.product.name}"
+
+# Accounts Management
+class GeneralLedger(models.Model):
+    account_name = models.CharField(max_length=255)
+    balance = models.DecimalField(max_digits=15, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.account_name} - Balance: {self.balance}"
+
+class AccountReceivable(models.Model):
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    amount_due = models.DecimalField(max_digits=15, decimal_places=2)
+    due_date = models.DateField()
+
+    def __str__(self):
+        return f"AR for {self.customer.name} - Amount Due: {self.amount_due}"
+
+class AccountPayable(models.Model):
+    supplier = models.ForeignKey('Supplier', on_delete=models.CASCADE)
+    amount_due = models.DecimalField(max_digits=15, decimal_places=2)
+    due_date = models.DateField()
+
+    def __str__(self):
+        return f"AP for {self.supplier.name} - Amount Due: {self.amount_due}"
+
+class FinancialReport(models.Model):
+    report_type = models.CharField(max_length=255)
+    generated_date = models.DateField(auto_now_add=True)
+    content = models.TextField()
+
+    def __str__(self):
+        return f"{self.report_type} Report generated on {self.generated_date}"
 
 # Order Management
 class Customer(models.Model):
@@ -19,7 +60,7 @@ class Customer(models.Model):
     phone_number = models.CharField(max_length=15)
     email = models.EmailField()
 
-    def _str_(self):
+    def __str__(self):
         return self.name
 
 class Order(models.Model):
@@ -28,7 +69,7 @@ class Order(models.Model):
     order_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Shipped', 'Shipped'), ('Delivered', 'Delivered')])
 
-    def _str_(self):
+    def __str__(self):
         return f"Order #{self.id} by {self.customer.name}"
 
 class OrderProduct(models.Model):
@@ -36,7 +77,7 @@ class OrderProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Order #{self.order.id}"
 
 # Purchase Order Management
@@ -44,7 +85,7 @@ class Supplier(models.Model):
     name = models.CharField(max_length=255)
     contact_info = models.TextField()
 
-    def _str_(self):
+    def __str__(self):
         return self.name
 
 class PurchaseOrder(models.Model):
@@ -53,7 +94,7 @@ class PurchaseOrder(models.Model):
     order_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Received', 'Received')])
 
-    def _str_(self):
+    def __str__(self):
         return f"Purchase Order #{self.id} from {self.supplier.name}"
 
 class PurchaseOrderProduct(models.Model):
@@ -61,7 +102,7 @@ class PurchaseOrderProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Purchase Order #{self.purchase_order.id}"
 
 # Account Transactions
@@ -75,7 +116,7 @@ class AccountTransaction(models.Model):
     date = models.DateField(auto_now_add=True)
     related_order = models.CharField(max_length=255, null=True, blank=True)
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.transaction_type} Transaction - Amount: {self.amount}"
 
 # Inventory Transactions
@@ -90,7 +131,7 @@ class InventoryTransaction(models.Model):
     date = models.DateField(auto_now_add=True)
     related_order = models.CharField(max_length=255, null=True, blank=True)
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.transaction_type} Transaction - {self.product.name} (x{self.quantity})"
 
 # HR Management
@@ -101,7 +142,7 @@ class Employee(models.Model):
     hire_date = models.DateField()
     salary = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
 # Distribution Planning
@@ -110,5 +151,5 @@ class DeliveryRoute(models.Model):
     route_details = models.TextField()
     estimated_delivery_time = models.DateTimeField()
 
-    def _str_(self):
+    def __str__(self):
         return f"Route for Order #{self.order.id}"

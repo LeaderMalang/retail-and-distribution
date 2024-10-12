@@ -1,10 +1,14 @@
 from django.contrib import admin
-from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction
+from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, GeneralLedger, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch
 
 # Inventory Management Admin
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'lot_number', 'expiration_date', 'quantity', 'price')
     search_fields = ('name', 'lot_number')
+
+class InventoryBatchAdmin(admin.ModelAdmin):
+    list_display = ('product', 'batch_number', 'expiration_date', 'quantity')
+    search_fields = ('product__name', 'batch_number')
 
 # Order Management Admin
 class OrderProductInline(admin.TabularInline):
@@ -17,26 +21,27 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('customer__name',)
     inlines = [OrderProductInline]
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        # Handle inventory and accounting transactions
-        for order_product in OrderProduct.objects.filter(order=obj):
-            product = order_product.product
-            product.quantity -= order_product.quantity
-            product.save()
-            InventoryTransaction.objects.create(
-                transaction_type='Sale',
-                product=product,
-                quantity=-order_product.quantity,
-                related_order=f"Order #{obj.id}"
-            )
-        # Record accounting transaction
-        total_amount = sum([op.product.price * op.quantity for op in OrderProduct.objects.filter(order=obj)])
-        AccountTransaction.objects.create(
-            transaction_type='Sale',
-            amount=total_amount,
-            related_order=f"Order #{obj.id}"
-        )
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, OrderProduct):
+                product = instance.product
+                product.quantity -= instance.quantity
+                product.save()
+                InventoryTransaction.objects.create(
+                    transaction_type='Sale',
+                    product=product,
+                    quantity=-instance.quantity,
+                    related_order=f"Order #{instance.order.id}"
+                )
+                # Record accounting transaction
+                total_amount = instance.product.price * instance.quantity
+                AccountTransaction.objects.create(
+                    transaction_type='Sale',
+                    amount=total_amount,
+                    related_order=f"Order #{instance.order.id}"
+                )
+        super().save_formset(request, form, formset, change)
 
 # Purchase Order Management Admin
 class PurchaseOrderProductInline(admin.TabularInline):
@@ -49,26 +54,44 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     search_fields = ('supplier__name',)
     inlines = [PurchaseOrderProductInline]
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        # Handle inventory and accounting transactions
-        for purchase_product in PurchaseOrderProduct.objects.filter(purchase_order_id=obj.id):
-            product = purchase_product.product
-            product.quantity += purchase_product.quantity
-            product.save()
-            InventoryTransaction.objects.create(
-                transaction_type='Purchase',
-                product=product,
-                quantity=purchase_product.quantity,
-                related_order=f"Purchase Order #{obj.id}"
-            )
-        # Record accounting transaction
-        total_amount = sum([pp.product.price * pp.quantity for pp in PurchaseOrderProduct.objects.filter(purchase_order=obj)])
-        AccountTransaction.objects.create(
-            transaction_type='Purchase',
-            amount=total_amount,
-            related_order=f"Purchase Order #{obj.id}"
-        )
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, PurchaseOrderProduct):
+                product = instance.product
+                product.quantity += instance.quantity
+                product.save()
+                InventoryTransaction.objects.create(
+                    transaction_type='Purchase',
+                    product=product,
+                    quantity=instance.quantity,
+                    related_order=f"Purchase Order #{instance.purchase_order.id}"
+                )
+                # Record accounting transaction
+                total_amount = instance.product.price * instance.quantity
+                AccountTransaction.objects.create(
+                    transaction_type='Purchase',
+                    amount=total_amount,
+                    related_order=f"Purchase Order #{instance.purchase_order.id}"
+                )
+        super().save_formset(request, form, formset, change)
+
+# Account Management Admin
+class GeneralLedgerAdmin(admin.ModelAdmin):
+    list_display = ('account_name', 'balance')
+    search_fields = ('account_name',)
+
+class AccountReceivableAdmin(admin.ModelAdmin):
+    list_display = ('customer', 'amount_due', 'due_date')
+    search_fields = ('customer__name',)
+
+class AccountPayableAdmin(admin.ModelAdmin):
+    list_display = ('supplier', 'amount_due', 'due_date')
+    search_fields = ('supplier__name',)
+
+class FinancialReportAdmin(admin.ModelAdmin):
+    list_display = ('report_type', 'generated_date')
+    search_fields = ('report_type',)
 
 # Account Transaction Admin
 class AccountTransactionAdmin(admin.ModelAdmin):
