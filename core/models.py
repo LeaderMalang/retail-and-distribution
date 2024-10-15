@@ -1,25 +1,18 @@
 from django.db import models
+from django.db.models import Sum
+from django.core.exceptions import ValidationError
+from configuration.models import *
 
 # Inventory Management
 class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     lot_number = models.CharField(max_length=50)
-    expiration_date = models.DateField()
-    quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock_quantity = models.IntegerField(default=0)
+    on_backorder = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
-
-class InventoryBatch(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    batch_number = models.CharField(max_length=50)
-    expiration_date = models.DateField()
-    quantity = models.IntegerField()
-
-    def __str__(self):
-        return f"Batch {self.batch_number} of {self.product.name}"
 
 # Accounts Management
 class GeneralLedger(models.Model):
@@ -38,7 +31,7 @@ class AccountReceivable(models.Model):
         return f"AR for {self.customer.name} - Amount Due: {self.amount_due}"
 
 class AccountPayable(models.Model):
-    supplier = models.ForeignKey('Supplier', on_delete=models.CASCADE)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     amount_due = models.DecimalField(max_digits=15, decimal_places=2)
     due_date = models.DateField()
 
@@ -65,6 +58,10 @@ class Customer(models.Model):
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    booking_man = models.ForeignKey(BookingMan, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='OrderProduct')
     order_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Shipped', 'Shipped'), ('Delivered', 'Delivered')])
@@ -76,17 +73,49 @@ class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
+    
+    def clean(self):
+        if self.product.stock_quantity < self.quantity:
+            if not self.product.on_backorder:
+                raise ValidationError(
+                    f"Quantity '{self.quantity}' exceeds available stock '{self.product.stock_quantity}' for product '{self.product.name}'."
+                )
+            
+        elif self.product.stock_quantity == 0 and not self.product.on_backorder:
+            raise ValidationError(
+                f"No stock available for product '{self.product.name}'."
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+
+        if not self.pk:
+            product = self.product
+            product.stock_quantity -= self.quantity
+            product.save()
+            InventoryTransaction.objects.create(
+                transaction_type='Sale',
+                product=self.product,
+                quantity=self.quantity,
+                related_order=f"Sale Order #{self.order.id}",
+            )
+
+            purchase_order_product = PurchaseOrderProduct.objects.filter(product=self.product, quantity__gt=0).first()
+
+            total_amount = purchase_order_product.price * self.quantity
+
+            AccountTransaction.objects.create(
+                transaction_type='Sale',
+                amount=total_amount,
+                related_order=f"Sale Order #{self.order.id}"
+            )
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Order #{self.order.id}"
 
 # Purchase Order Management
-class Supplier(models.Model):
-    name = models.CharField(max_length=255)
-    contact_info = models.TextField()
-
-    def __str__(self):
-        return self.name
 
 class PurchaseOrder(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
@@ -101,9 +130,66 @@ class PurchaseOrderProduct(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Purchase Order #{self.purchase_order.id}"
+
+class InventoryBatch(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    batch_number = models.CharField(max_length=50)
+    expiration_date = models.DateField()
+    quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"Batch {self.batch_number} of {self.product.name}"
+
+    def clean(self):
+        try:
+            purchase_order_product = PurchaseOrderProduct.objects.get(
+                purchase_order=self.purchase_order, product=self.product
+            )
+        except PurchaseOrderProduct.DoesNotExist:
+            raise ValidationError(f"Purchase order for product '{self.product.name}' does not exist.")
+
+        total_existing_batches = InventoryBatch.objects.filter(
+            purchase_order=self.purchase_order, product=self.product
+        ).aggregate(Sum('quantity'))['quantity__sum'] or 0
+
+        total_quantity_after_new_batch = total_existing_batches + self.quantity
+
+        if total_quantity_after_new_batch > purchase_order_product.quantity:
+            raise ValidationError(f"Total batch quantity ({total_quantity_after_new_batch}) cannot exceed the "
+                                  f"ordered quantity ({purchase_order_product.quantity}) in the purchase order.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+
+        if not self.pk:
+            product = self.product
+            product.stock_quantity += self.quantity
+            product.save()
+            InventoryTransaction.objects.create(
+                transaction_type='Purchase',
+                product=self.product,
+                quantity=self.quantity,
+                related_order=f"Purchase Order #{self.purchase_order.id}",
+            )
+
+            purchase_order_product = PurchaseOrderProduct.objects.get(
+                purchase_order=self.purchase_order, product=self.product
+            )
+
+            total_amount = purchase_order_product.price * self.quantity
+
+            AccountTransaction.objects.create(
+                transaction_type='Purchase',
+                amount=total_amount,
+                related_order=f"Purchase Order #{self.purchase_order.id}"
+            )
+
+        super().save(*args, **kwargs)
 
 # Account Transactions
 class AccountTransaction(models.Model):
