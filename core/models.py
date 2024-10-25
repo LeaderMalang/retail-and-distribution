@@ -2,6 +2,26 @@ from django.db import models
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from configuration.models import *
+from django.utils import timezone
+
+class Supplier(models.Model):
+    name = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
+    contact_info = models.TextField()
+
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            GeneralLedger.objects.create(
+                account_type='Supplier',
+                account_name=f"Name: {self.name}-Email: {self.email}",
+                balance=0,
+            )
+
+        super().save(*args, **kwargs)
+
 
 # Inventory Management
 class Product(models.Model):
@@ -9,18 +29,26 @@ class Product(models.Model):
     description = models.TextField()
     lot_number = models.CharField(max_length=50)
     stock_quantity = models.IntegerField(default=0)
+    total_base_unit_quantity = models.IntegerField(default=0)
     on_backorder = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
 
-# Accounts Management
-class GeneralLedger(models.Model):
-    account_name = models.CharField(max_length=255)
-    balance = models.DecimalField(max_digits=15, decimal_places=2)
+class ProductUnit(models.Model):
+    UNIT_CHOICES = [
+        ('box', 'Box'),
+        ('tablet', 'Tablet'),
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    unit_name = models.CharField(max_length=50, choices=UNIT_CHOICES)
+    quantity_in_base_unit = models.IntegerField()
 
     def __str__(self):
-        return f"{self.account_name} - Balance: {self.balance}"
+        return f"{self.unit_name} of {self.product.name} ({self.quantity_in_base_unit} per {self.unit_name})"
+
+# Accounts Management
 
 class AccountReceivable(models.Model):
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
@@ -29,6 +57,7 @@ class AccountReceivable(models.Model):
 
     def __str__(self):
         return f"AR for {self.customer.name} - Amount Due: {self.amount_due}"
+
 
 class AccountPayable(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
@@ -55,6 +84,28 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            GeneralLedger.objects.create(
+                account_type='Customer',
+                account_name=f"Name: {self.name}-Email: {self.email}",
+                balance=0,
+            )
+
+        super().save(*args, **kwargs)
+
+class GeneralLedger(models.Model):
+    ACCOUNT_TYPE_CHOICES = [
+        ('Customer', 'Customer'),
+        ('Supplier', 'Supplier')
+    ]
+    account_type = models.CharField(max_length=50, choices=ACCOUNT_TYPE_CHOICES)
+    account_name = models.CharField(max_length=255)
+    balance = models.DecimalField(max_digits=15, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.account_type}: {self.account_name} - Balance: {self.balance}"
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
@@ -93,6 +144,11 @@ class OrderProduct(models.Model):
             product = self.product
             product.stock_quantity -= self.quantity
             product.save()
+            product_unit = ProductUnit.objects.get(product=product)
+            if product_unit and product_unit.quantity_in_base_unit:
+                product.total_base_unit_quantity = product_unit.quantity_in_base_unit*product.stock_quantity
+                product.save()
+            
             InventoryTransaction.objects.create(
                 transaction_type='Sale',
                 product=self.product,
@@ -114,6 +170,20 @@ class OrderProduct(models.Model):
 
     def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Order #{self.order.id}"
+
+class OrderReturn(models.Model):
+    ordered_product = models.ForeignKey(OrderProduct, on_delete=models.CASCADE, related_name='returns')
+    return_date = models.DateTimeField(default=timezone.now)
+    quantity_returned = models.PositiveIntegerField()
+
+    def save(self, *args, **kwargs):
+
+        if not self.pk:
+            product = self.ordered_product.product
+            product.stock_quantity += self.quantity_returned
+            product.save()
+
+        super().save(*args, **kwargs)
 
 # Purchase Order Management
 
@@ -170,13 +240,18 @@ class InventoryBatch(models.Model):
             product = self.product
             product.stock_quantity += self.quantity
             product.save()
+
+            product_unit = ProductUnit.objects.get(product=product)
+            if product_unit and product_unit.quantity_in_base_unit:
+                product.total_base_unit_quantity = product_unit.quantity_in_base_unit*product.stock_quantity
+                product.save()
+
             InventoryTransaction.objects.create(
                 transaction_type='Purchase',
                 product=self.product,
                 quantity=self.quantity,
                 related_order=f"Purchase Order #{self.purchase_order.id}",
             )
-
             purchase_order_product = PurchaseOrderProduct.objects.get(
                 purchase_order=self.purchase_order, product=self.product
             )
@@ -188,10 +263,10 @@ class InventoryBatch(models.Model):
                 amount=total_amount,
                 related_order=f"Purchase Order #{self.purchase_order.id}"
             )
-
         super().save(*args, **kwargs)
 
 # Account Transactions
+
 class AccountTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
         ('Sale', 'Sale'),

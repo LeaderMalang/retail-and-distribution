@@ -1,13 +1,31 @@
 from django.contrib import admin
-from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, GeneralLedger, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch
+from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, GeneralLedger, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit
+from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import messages
+
+
+admin.site.register(Supplier)
+admin.site.register(GeneralLedger)
+admin.site.register(OrderReturn)
+
+class ProductUnitInlineFormset(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if self.total_form_count() > 1:
+            raise ValidationError('You can only add one Product Unit.')
+
+class ProductUnitInline(admin.TabularInline):
+    model = ProductUnit
+    formset = ProductUnitInlineFormset
+    extra = 0
 
 # Inventory Management Admin
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'lot_number', 'stock_quantity')
     search_fields = ('name', 'lot_number')
-    readonly_fields = ('stock_quantity',)
+    readonly_fields = ('stock_quantity', 'total_base_unit_quantity',)
+    inlines = [ProductUnitInline]
 
 # Order Management Admin
 class OrderProductInline(admin.TabularInline):
