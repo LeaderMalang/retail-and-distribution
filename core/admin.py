@@ -1,14 +1,31 @@
 from django.contrib import admin
-from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, GeneralLedger, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch
+from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, GeneralLedger, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit
+from django import forms
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+
+
+admin.site.register(Supplier)
+admin.site.register(GeneralLedger)
+admin.site.register(OrderReturn)
+
+class ProductUnitInlineFormset(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if self.total_form_count() > 1:
+            raise ValidationError('You can only add one Product Unit.')
+
+class ProductUnitInline(admin.TabularInline):
+    model = ProductUnit
+    formset = ProductUnitInlineFormset
+    extra = 0
 
 # Inventory Management Admin
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'lot_number', 'expiration_date', 'quantity', 'price')
+    list_display = ('name', 'lot_number', 'stock_quantity')
     search_fields = ('name', 'lot_number')
-
-class InventoryBatchAdmin(admin.ModelAdmin):
-    list_display = ('product', 'batch_number', 'expiration_date', 'quantity')
-    search_fields = ('product__name', 'batch_number')
+    readonly_fields = ('stock_quantity', 'total_base_unit_quantity',)
+    inlines = [ProductUnitInline]
 
 # Order Management Admin
 class OrderProductInline(admin.TabularInline):
@@ -21,28 +38,6 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('customer__name',)
     inlines = [OrderProductInline]
 
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-        for instance in instances:
-            if isinstance(instance, OrderProduct):
-                product = instance.product
-                product.quantity -= instance.quantity
-                product.save()
-                InventoryTransaction.objects.create(
-                    transaction_type='Sale',
-                    product=product,
-                    quantity=-instance.quantity,
-                    related_order=f"Order #{instance.order.id}"
-                )
-                # Record accounting transaction
-                total_amount = instance.product.price * instance.quantity
-                AccountTransaction.objects.create(
-                    transaction_type='Sale',
-                    amount=total_amount,
-                    related_order=f"Order #{instance.order.id}"
-                )
-        super().save_formset(request, form, formset, change)
-
 # Purchase Order Management Admin
 class PurchaseOrderProductInline(admin.TabularInline):
     model = PurchaseOrderProduct
@@ -54,27 +49,31 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     search_fields = ('supplier__name',)
     inlines = [PurchaseOrderProductInline]
 
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
-        for instance in instances:
-            if isinstance(instance, PurchaseOrderProduct):
-                product = instance.product
-                product.quantity += instance.quantity
-                product.save()
-                InventoryTransaction.objects.create(
-                    transaction_type='Purchase',
-                    product=product,
-                    quantity=instance.quantity,
-                    related_order=f"Purchase Order #{instance.purchase_order.id}"
-                )
-                # Record accounting transaction
-                total_amount = instance.product.price * instance.quantity
-                AccountTransaction.objects.create(
-                    transaction_type='Purchase',
-                    amount=total_amount,
-                    related_order=f"Purchase Order #{instance.purchase_order.id}"
-                )
-        super().save_formset(request, form, formset, change)
+    # def save_formset(self, request, form, formset, change):
+    #     instances = formset.save(commit=False)
+    #     for instance in instances:
+    #         if isinstance(instance, PurchaseOrderProduct):
+    #             product = instance.product
+    #             product.quantity += instance.quantity
+    #             product.save()
+    #             InventoryTransaction.objects.create(
+    #                 transaction_type='Purchase',
+    #                 product=product,
+    #                 quantity=instance.quantity,
+    #                 related_order=f"Purchase Order #{instance.purchase_order.id}"
+    #             )
+    #             # Record accounting transaction
+    #             total_amount = instance.product.price * instance.quantity
+    #             AccountTransaction.objects.create(
+    #                 transaction_type='Purchase',
+    #                 amount=total_amount,
+    #                 related_order=f"Purchase Order #{instance.purchase_order.id}"
+    #             )
+    #     super().save_formset(request, form, formset, change)
+
+class InventoryBatchAdmin(admin.ModelAdmin):
+    list_display = ('purchase_order', 'product', 'batch_number', 'expiration_date', 'quantity')
+    search_fields = ('product__name', 'batch_number')
 
 # Account Management Admin
 class GeneralLedgerAdmin(admin.ModelAdmin):
@@ -118,6 +117,7 @@ class EmployeeAdmin(admin.ModelAdmin):
 # Register models with admin
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Customer)
+admin.site.register(InventoryBatch, InventoryBatchAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(PurchaseOrder, PurchaseOrderAdmin)
 admin.site.register(DeliveryRoute, DeliveryRouteAdmin)
