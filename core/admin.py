@@ -1,13 +1,15 @@
 from django.contrib import admin
-from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, GeneralLedger, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit
+from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit, DeliveryMan, GeneralLedgerAccount, GeneralLedgerEntry, Payment
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 
 admin.site.register(Supplier)
-admin.site.register(GeneralLedger)
 admin.site.register(OrderReturn)
+admin.site.register(GeneralLedgerAccount)
+admin.site.register(GeneralLedgerEntry)
+admin.site.register(Payment)
 
 class ProductUnitInlineFormset(forms.BaseInlineFormSet):
     def clean(self):
@@ -36,6 +38,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'customer', 'order_date', 'status')
     list_filter = ('status', 'order_date')
     search_fields = ('customer__name',)
+    readonly_fields = ('total_amount', 'pending_amount', 'payment_status')
     inlines = [OrderProductInline]
 
 # Purchase Order Management Admin
@@ -75,11 +78,6 @@ class InventoryBatchAdmin(admin.ModelAdmin):
     list_display = ('purchase_order', 'product', 'batch_number', 'expiration_date', 'quantity')
     search_fields = ('product__name', 'batch_number')
 
-# Account Management Admin
-class GeneralLedgerAdmin(admin.ModelAdmin):
-    list_display = ('account_name', 'balance')
-    search_fields = ('account_name',)
-
 class AccountReceivableAdmin(admin.ModelAdmin):
     list_display = ('customer', 'amount_due', 'due_date')
     search_fields = ('customer__name',)
@@ -117,6 +115,7 @@ class EmployeeAdmin(admin.ModelAdmin):
 # Register models with admin
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Customer)
+admin.site.register(DeliveryMan)
 admin.site.register(InventoryBatch, InventoryBatchAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(PurchaseOrder, PurchaseOrderAdmin)

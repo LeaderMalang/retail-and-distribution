@@ -11,16 +11,6 @@ class Supplier(models.Model):
 
     def __str__(self):
         return self.name
-    
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            GeneralLedger.objects.create(
-                account_type='Supplier',
-                account_name=f"Name: {self.name}-Email: {self.email}",
-                balance=0,
-            )
-
-        super().save(*args, **kwargs)
 
 
 # Inventory Management
@@ -52,6 +42,8 @@ class ProductUnit(models.Model):
 
 class AccountReceivable(models.Model):
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    # paid_amount
+    # paid_date
     amount_due = models.DecimalField(max_digits=15, decimal_places=2)
     due_date = models.DateField()
 
@@ -61,6 +53,8 @@ class AccountReceivable(models.Model):
 
 class AccountPayable(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    # paid_amount
+    # paid_date
     amount_due = models.DecimalField(max_digits=15, decimal_places=2)
     due_date = models.DateField()
 
@@ -84,41 +78,149 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name
-    
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            GeneralLedger.objects.create(
-                account_type='Customer',
-                account_name=f"Name: {self.name}-Email: {self.email}",
-                balance=0,
-            )
 
-        super().save(*args, **kwargs)
-
-class GeneralLedger(models.Model):
-    ACCOUNT_TYPE_CHOICES = [
-        ('Customer', 'Customer'),
-        ('Supplier', 'Supplier')
-    ]
-    account_type = models.CharField(max_length=50, choices=ACCOUNT_TYPE_CHOICES)
-    account_name = models.CharField(max_length=255)
-    balance = models.DecimalField(max_digits=15, decimal_places=2)
+class DeliveryMan(models.Model):
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"{self.account_type}: {self.account_name} - Balance: {self.balance}"
+        return self.name
+
+class GeneralLedgerAccount(models.Model):
+    ACCOUNT_TYPES = [
+        ('asset', 'Asset'),
+        ('liability', 'Liability'),
+        ('equity', 'Equity'),
+        ('revenue', 'Revenue'),
+        ('expense', 'Expense'),
+    ]
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=100)
+    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+class GeneralLedgerEntry(models.Model):
+    account = models.ForeignKey(GeneralLedgerAccount, on_delete=models.CASCADE)
+    date = models.DateField()
+    description = models.TextField()
+    debit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    credit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.date} - {self.description}"
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     booking_man = models.ForeignKey(BookingMan, on_delete=models.CASCADE)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.CASCADE, null=True)
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='OrderProduct')
     order_date = models.DateField(auto_now_add=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
+    pending_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_status = models.CharField(max_length=50, choices=[('PAID', 'PAID'), ('PARTIALLY PAID', 'PARTIALLY PAID')], null=True)
     status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Shipped', 'Shipped'), ('Delivered', 'Delivered')])
 
     def __str__(self):
         return f"Order #{self.id} by {self.customer.name}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)  # Save the order first
+
+        self.calculate_total_amount()
+
+        super().save(*args, **kwargs)
+    
+    def calculate_total_amount(self):
+        total_amount = 0
+        order_products = self.orderproduct_set.all()
+
+        for order_product in order_products:
+            purchase_order_product = PurchaseOrderProduct.objects.filter(
+                product=order_product.product,
+                quantity__gt=0
+            ).first()
+
+            if purchase_order_product:
+                total_amount += purchase_order_product.price * order_product.quantity
+
+        self.total_amount = total_amount
+        self.pending_amount = total_amount - self.paid_amount
+
+        self.record_general_ledger_entries()
+    
+    def record_general_ledger_entries(self):
+        accounts_receivable, _ = GeneralLedgerAccount.objects.get_or_create(
+        name='Accounts Receivable', 
+        defaults={'code': 'AR'}
+    )
+        revenue_account, _ = GeneralLedgerAccount.objects.get_or_create(
+        name='Revenue', 
+        defaults={'code': 'RE'}  # Assuming 'RE' is the code for Revenue
+    )
+
+        GeneralLedgerEntry.objects.create(
+            account=accounts_receivable,
+            date=timezone.now(),
+            description=f"Order #{self.id} - Sale to {self.customer}",
+            debit=self.total_amount,
+            credit=0
+        )
+
+        GeneralLedgerEntry.objects.create(
+            account=revenue_account,
+            date=timezone.now(),
+            description=f"Order #{self.id} - Sale revenue",
+            debit=0,
+            credit=self.total_amount
+        )
+        amount_paid = self.paid_amount
+
+        self.record_payment(amount_paid)
+
+    def record_payment(self, amount_paid):
+        cash_account, _ = GeneralLedgerAccount.objects.get_or_create(
+        name='Cash', 
+        defaults={'code': 'CE'}
+    )
+        accounts_receivable, _ = GeneralLedgerAccount.objects.get_or_create(
+        name='Accounts Receivable', 
+        defaults={'code': 'AR'}
+    )
+
+        GeneralLedgerEntry.objects.create(
+            account=cash_account,
+            date=timezone.now(),
+            description=f"Payment received for Order #{self.id}",
+            debit=amount_paid,
+            credit=0
+        )
+
+        GeneralLedgerEntry.objects.create(
+            account=accounts_receivable,
+            date=timezone.now(),
+            description=f"Reduce Accounts Receivable for Order #{self.id}",
+            debit=0,
+            credit=amount_paid
+        )
+
+        Payment.objects.create(order=self, amount_paid=amount_paid)
+
+        self.pending_amount -= amount_paid
+        if self.pending_amount <= 0:
+            self.payment_status = 'PAID'
+            self.pending_amount = 0
+        else:
+            self.payment_status = 'PARTIALLY PAID'
+        
+class Payment(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField(auto_now_add=True)
 
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
