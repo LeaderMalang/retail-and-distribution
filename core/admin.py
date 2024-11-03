@@ -1,12 +1,11 @@
 from django.contrib import admin
-from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit, DeliveryMan, GeneralLedgerAccount, GeneralLedgerEntry, Payment
+from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit, DeliveryMan, GeneralLedgerAccount, GeneralLedgerEntry, Payment, OrderReturnProduct, PurchaseOrderReturn, PurchaseOrderReturnProduct
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 
 admin.site.register(Supplier)
-admin.site.register(OrderReturn)
 admin.site.register(GeneralLedgerAccount)
 admin.site.register(GeneralLedgerEntry)
 admin.site.register(Payment)
@@ -34,11 +33,33 @@ class OrderProductInline(admin.TabularInline):
     model = OrderProduct
     extra = 1
 
+class OrderReturnProductInline(admin.TabularInline):
+    model = OrderReturnProduct
+    extra = 1
+
+class OrderReturnAdmin(admin.ModelAdmin):
+    # list_display = ('id', 'customer', 'order_date', 'status')
+    # list_filter = ('status', 'order_date')
+    # search_fields = ('customer__name',)
+    # readonly_fields = ('pending_amount', 'payment_status')
+    inlines = [OrderReturnProductInline]
+
+class PurchaseOrderReturnProductInline(admin.TabularInline):
+    model = PurchaseOrderReturnProduct
+    extra = 1
+
+class PurchaseOrderReturnAdmin(admin.ModelAdmin):
+    # list_display = ('id', 'customer', 'order_date', 'status')
+    # list_filter = ('status', 'order_date')
+    # search_fields = ('customer__name',)
+    # readonly_fields = ('pending_amount', 'payment_status')
+    inlines = [PurchaseOrderReturnProductInline]
+
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'customer', 'order_date', 'status')
     list_filter = ('status', 'order_date')
     search_fields = ('customer__name',)
-    readonly_fields = ('total_amount', 'pending_amount', 'payment_status')
+    readonly_fields = ('pending_amount', 'payment_status')
     inlines = [OrderProductInline]
 
 # Purchase Order Management Admin
@@ -50,6 +71,7 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'supplier', 'order_date', 'status')
     list_filter = ('status', 'order_date')
     search_fields = ('supplier__name',)
+    readonly_fields = ('pending_amount',)
     inlines = [PurchaseOrderProductInline]
 
     # def save_formset(self, request, form, formset, change):
@@ -118,8 +140,10 @@ admin.site.register(Customer)
 admin.site.register(DeliveryMan)
 admin.site.register(InventoryBatch, InventoryBatchAdmin)
 admin.site.register(Order, OrderAdmin)
+admin.site.register(PurchaseOrderReturn, PurchaseOrderReturnAdmin)
+admin.site.register(OrderReturn, OrderReturnAdmin)
 admin.site.register(PurchaseOrder, PurchaseOrderAdmin)
 admin.site.register(DeliveryRoute, DeliveryRouteAdmin)
 admin.site.register(Employee, EmployeeAdmin)
-admin.site.register(AccountTransaction, AccountTransactionAdmin)
+# admin.site.register(AccountTransaction, AccountTransactionAdmin)
 admin.site.register(InventoryTransaction, InventoryTransactionAdmin)
