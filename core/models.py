@@ -6,28 +6,17 @@ from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
-
-
-class TimeStampMixin(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    sync_status=models.BooleanField(default=False)
-
-    class Meta:
-        abstract = True
-
-class Supplier(TimeStampMixin):
+class Supplier(models.Model):
     name = models.CharField(max_length=255)
     email = models.CharField(max_length=255)
     contact_info = models.TextField()
-    
 
     def __str__(self):
         return self.name
 
 
 # Inventory Management
-class Product(TimeStampMixin):
+class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     lot_number = models.CharField(max_length=50)
@@ -38,7 +27,7 @@ class Product(TimeStampMixin):
     def __str__(self):
         return self.name
 
-class ProductUnit(TimeStampMixin):
+class ProductUnit(models.Model):
     UNIT_CHOICES = [
         ('box', 'Box'),
         ('tablet', 'Tablet'),
@@ -53,7 +42,7 @@ class ProductUnit(TimeStampMixin):
 
 # Accounts Management
 
-class AccountReceivable(TimeStampMixin):
+class AccountReceivable(models.Model):
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
     # paid_amount
     # paid_date
@@ -64,7 +53,7 @@ class AccountReceivable(TimeStampMixin):
         return f"AR for {self.customer.name} - Amount Due: {self.amount_due}"
 
 
-class AccountPayable(TimeStampMixin):
+class AccountPayable(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     # paid_amount
     # paid_date
@@ -74,7 +63,7 @@ class AccountPayable(TimeStampMixin):
     def __str__(self):
         return f"AP for {self.supplier.name} - Amount Due: {self.amount_due}"
 
-class FinancialReport(TimeStampMixin):
+class FinancialReport(models.Model):
     report_type = models.CharField(max_length=255)
     generated_date = models.DateField(auto_now_add=True)
     content = models.TextField()
@@ -83,24 +72,22 @@ class FinancialReport(TimeStampMixin):
         return f"{self.report_type} Report generated on {self.generated_date}"
 
 # Order Management
-class Customer(TimeStampMixin):
+class Customer(models.Model):
     name = models.CharField(max_length=255)
     address = models.TextField()
     phone_number = models.CharField(max_length=15)
     email = models.EmailField()
-    city = models.ForeignKey(City,null=True, on_delete=models.CASCADE)
-    area = models.ForeignKey(Area, null=True,on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
-class DeliveryMan(TimeStampMixin):
+class DeliveryMan(models.Model):
     name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
 
-class GeneralLedgerAccount(TimeStampMixin):
+class GeneralLedgerAccount(models.Model):
     ACCOUNT_TYPES = [
         ('asset', 'Asset'),
         ('liability', 'Liability'),
@@ -116,7 +103,7 @@ class GeneralLedgerAccount(TimeStampMixin):
     def __str__(self):
         return f"{self.name} ({self.code})"
 
-class GeneralLedgerEntry(TimeStampMixin):
+class GeneralLedgerEntry(models.Model):
     account = models.ForeignKey(GeneralLedgerAccount, on_delete=models.CASCADE)
     date = models.DateField()
     description = models.TextField()
@@ -126,7 +113,7 @@ class GeneralLedgerEntry(TimeStampMixin):
     def __str__(self):
         return f"{self.date} - {self.description}"
 
-class Order(TimeStampMixin):
+class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     booking_man = models.ForeignKey(BookingMan, on_delete=models.CASCADE)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
@@ -220,16 +207,6 @@ class Order(TimeStampMixin):
             self.pending_amount = 0
         else:
             self.payment_status = 'PARTIALLY PAID'
-<<<<<<< HEAD
-        
-class Payment(TimeStampMixin):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateField(auto_now_add=True)
-
-class OrderProduct(TimeStampMixin):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-=======
 
 class Payment(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -244,7 +221,6 @@ class Payment(models.Model):
 
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_products')
->>>>>>> 0c23c8e44ae766a30464af8e9d84dcac5d7b4021
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     
@@ -285,12 +261,6 @@ class OrderProduct(models.Model):
     def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Order #{self.order.id}"
 
-<<<<<<< HEAD
-class OrderReturn(TimeStampMixin):
-    ordered_product = models.ForeignKey(OrderProduct, on_delete=models.CASCADE, related_name='returns')
-    return_date = models.DateTimeField(default=timezone.now)
-    quantity_returned = models.PositiveIntegerField()
-=======
 class OrderReturn(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='returns')
     return_date = models.DateField(auto_now_add=True)
@@ -305,7 +275,6 @@ class OrderReturn(models.Model):
 
     def __str__(self):
         return f"Return for Order #{self.order.id} on {self.return_date}"
->>>>>>> 0c23c8e44ae766a30464af8e9d84dcac5d7b4021
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -414,15 +383,9 @@ class OrderReturnProduct(models.Model):
 
 # Purchase Order Management
 
-<<<<<<< HEAD
-class PurchaseOrder(TimeStampMixin):
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='PurchaseOrderProduct')
-=======
 class PurchaseOrder(models.Model):
     supplier = models.ForeignKey('Supplier', on_delete=models.CASCADE)
     products = models.ManyToManyField('Product', through='PurchaseOrderProduct')
->>>>>>> 0c23c8e44ae766a30464af8e9d84dcac5d7b4021
     order_date = models.DateField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -433,10 +396,6 @@ class PurchaseOrder(models.Model):
     def __str__(self):
         return f"Purchase Order #{self.id} from {self.supplier.name}"
 
-<<<<<<< HEAD
-class PurchaseOrderProduct(TimeStampMixin):
-    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
-=======
     def save(self, *args, **kwargs):
         self.calculate_total_amount()
         super().save(*args, **kwargs)
@@ -496,7 +455,6 @@ class PurchaseOrderProduct(TimeStampMixin):
 
 class PurchaseOrderProduct(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='purchase_order_products')
->>>>>>> 0c23c8e44ae766a30464af8e9d84dcac5d7b4021
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -504,9 +462,6 @@ class PurchaseOrderProduct(models.Model):
     def __str__(self):
         return f"{self.product.name} (x{self.quantity}) in Purchase Order #{self.purchase_order.id}"
 
-<<<<<<< HEAD
-class InventoryBatch(TimeStampMixin):
-=======
 class PurchaseOrderReturn(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='returns')
     return_date = models.DateField(auto_now_add=True)
@@ -628,7 +583,6 @@ class PurchaseOrderReturnProduct(models.Model):
         super().save(*args, **kwargs)
 
 class InventoryBatch(models.Model):
->>>>>>> 0c23c8e44ae766a30464af8e9d84dcac5d7b4021
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     batch_number = models.CharField(max_length=50)
@@ -679,7 +633,7 @@ class InventoryBatch(models.Model):
 
 # Account Transactions
 
-class AccountTransaction(TimeStampMixin):
+class AccountTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
         ('Sale', 'Sale'),
         ('Purchase', 'Purchase')
@@ -693,7 +647,7 @@ class AccountTransaction(TimeStampMixin):
         return f"{self.transaction_type} Transaction - Amount: {self.amount}"
 
 # Inventory Transactions
-class InventoryTransaction(TimeStampMixin):
+class InventoryTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
         ('Sale', 'Sale'),
         ('Purchase', 'Purchase')
@@ -708,7 +662,7 @@ class InventoryTransaction(TimeStampMixin):
         return f"{self.transaction_type} Transaction - {self.product.name} (x{self.quantity})"
 
 # HR Management
-class Employee(TimeStampMixin):
+class Employee(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     position = models.CharField(max_length=255)
@@ -719,7 +673,7 @@ class Employee(TimeStampMixin):
         return f"{self.first_name} {self.last_name}"
 
 # Distribution Planning
-class DeliveryRoute(TimeStampMixin):
+class DeliveryRoute(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     route_details = models.TextField()
     estimated_delivery_time = models.DateTimeField()
