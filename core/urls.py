@@ -6,4 +6,8 @@ urlpatterns = [
     path('order_list/', views.order_list, name='order_list'),
     path('create_order/', views.create_order, name='create_order'),
     path('api/orders/', views.create_api_order, name='create_api_order'),
+    path('api/orders/<int:order_id>/', views.update_api_order, name='update_api_order'),
+    path('api/orders/<int:order_id>/', views.delete_api_order, name='delete_api_order'),
+    path('order/<int:order_id>/', views.delete_order, name='delete_order'),
+    path('update_order/<int:order_id>/', views.update_order, name='update_order'),
 ]

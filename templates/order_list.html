@@ -39,12 +39,30 @@
             <td>{{ order.total_amount }}</td>
             <td>{{ order.status }}</td>
             <td>
-              <i class="bi bi-pencil-fill"></i>
-              <i class="bi bi-trash-fill"></i>
+              <a href="/update_order/{{ order.id }}"><i class="bi bi-pencil-fill"></i></a>
+              <a href="{% url 'delete_order' order.id %}"><i class="bi bi-trash-fill"></i></a>
             </td>
           </tbody>
         {% endfor %}
       </table>
     </div>
+
+    <script>
+      function deleteOrder(orderId) {
+        fetch(`/api/orders/${orderId}/`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then((response) => {
+          if (response.ok) {
+            alert('Order deleted successfully!')
+            location.reload() // Reload the page or redirect
+          } else {
+            alert('Failed to delete the order.')
+          }
+        })
+      }
+    </script>
   </body>
 </html>
