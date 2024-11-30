@@ -257,7 +257,7 @@ def delete_api_order(request, order_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def create_purchase_order(request):
+def create_api_purchase_order(request):
     try:
         data = json.loads(request.body)
 
@@ -337,7 +337,7 @@ def create_purchase_order(request):
 
 @csrf_exempt
 @require_http_methods(["PUT"])
-def update_purchase_order(request, order_id):
+def update_api_purchase_order(request, order_id):
     try:
         data = json.loads(request.body)
 
@@ -424,7 +424,7 @@ def update_purchase_order(request, order_id):
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
-def delete_purchase_order(request, order_id):
+def delete_api_purchase_order(request, order_id):
     try:
         # Fetch the purchase order
         try:
