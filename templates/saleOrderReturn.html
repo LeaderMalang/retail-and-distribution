@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans&display=swap" rel="stylesheet" />
+
+    <title>Forms FrontEnd</title>
+  </head>
+
+  <body>
+    <div id="overlay" class="overlay"></div>
+
+    <div class="container mt-4">
+      <span class="open-nav" style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
+      <div class="row flex-nowrap">
+        <div id="mySideBar" class="col-auto col-md-3 col-xl-2 px-sm-2 px-2 full-sidebar" style="border-radius: 25px; background: #0A1629 !important;">
+          <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+          <div class="d-flex flex-column align-items-sm-start px-2 pt-2 text-white">
+            <a href="/" class="d-flex align-items-center pt-4 pb-3 mb-md-0 me-md-auto text-white text-decoration-none"><img src="icons/logo.png" alt="" /></a>
+            <div class="nav flex-column nav-pills sidebar me-3 w-100 mt-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+              <a href="dashboard.html" class="nav-link" type="button" style="text-align: left; color: white !important;
+                        background: rgba(255, 255, 255, 0.1007) !important; border-radius: 10px;">
+                <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M6 3C4.34315 3 3 4.34315 3 6V8C3 9.65685 4.34315 11 6 11H8C9.65685 11 11 9.65685 11 8V6C11 4.34315 9.65685 3 8 3H6ZM16 3C14.3431 3 13 4.34315 13 6V8C13 9.65685 14.3431 11 16 11H18C19.6569 11 21 9.65685 21 8V6C21 4.34315 19.6569 3 18 3H16ZM3 16C3 14.3431 4.34315 13 6 13H8C9.65685 13 11 14.3431 11 16V18C11 19.6569 9.65685 21 8 21H6C4.34315 21 3 19.6569 3 18V16ZM16 13C14.3431 13 13 14.3431 13 16V18C13 19.6569 14.3431 21 16 21H18C19.6569 21 21 19.6569 21 18V16C21 14.3431 19.6569 13 18 13H16Z" fill="#4365D0" />
+                </svg>Dashboard
+              </a>
+              <button class="nav-link" type="button" style="text-align: left; position: relative;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="me-2">
+                  <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM7 7H9V9H7V7ZM7 11H9V13H7V11ZM7 15H9V17H7V15ZM17 17H11V15H17V17ZM17 13H11V11H17V13ZM17 9H11V7H17V9Z" fill="white" />
+                </svg><span>Sale Order</span>
+                <svg id="forms-collapse-icon" class="collapse-icon" onclick="rotateIcon('forms-collapse-icon')" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 30 30" fill="none" data-bs-toggle="collapse" data-bs-target="#formCollapse" aria-expanded="false" aria-controls="formCollapse" style="position: absolute; right: 10px;">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M20.8839 11.6161C21.3345 12.0667 21.3692 12.7758 20.9879 13.2661L20.8839 13.3839L15.8839 18.3839C15.4333 18.8345 14.7242 18.8692 14.2339 18.4879L14.1161 18.3839L9.11611 13.3839C8.62796 12.8957 8.62796 12.1043 9.11611 11.6161C9.56672 11.1655 10.2758 11.1308 10.7661 11.5121L10.8839 11.6161L15 15.7312L19.1161 11.6161C19.5667 11.1655 20.2758 11.1308 20.7661 11.5121L20.8839 11.6161Z" fill="white" />
+                </svg>
+              </button>
+              <div class="forms-collapse collapse" id="formCollapse" style="position: relative; top: -10px;">
+                <div class="card card-body" style="background: transparent; padding: 0; padding-left: 20px !important;">
+                  <a href="request-form.html" class="collapse-item">
+                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="8" height="2" viewBox="0 0 8 2" fill="none">
+                      <path d="M0 1H8" stroke="#7D8592" stroke-width="2" />
+                    </svg>Sale Order
+                  </a>
+                  <!--  <a href="information-form.html" class="collapse-item">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="8" height="2"
+                                        viewBox="0 0 8 2" fill="none">
+                                        <path d="M0 1H8" stroke="#7D8592" stroke-width="2" />
+                                    </svg> Information Form</a>  -->
+                  <a href="saleOrderReturn.html" class="collapse-item">
+                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="8" height="2" viewBox="0 0 8 2" fill="none">
+                      <path d="M0 1H8" stroke="#7D8592" stroke-width="2" />
+                    </svg>Sale Order Return
+                  </a>
+                </div>
+              </div>
+
+              <button class="nav-link" type="button" style="text-align: left; position: relative;">
+                <svg xmlns=" http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="me-2">
+                  <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM9 17H7V10H9V17ZM13 17H11V7H13V17ZM17 17H15V13H17V17Z" fill="white" />
+                </svg>
+                <span>Purchase Order</span>
+                <svg id="reports-collapse-icon" class="collapse-icon" onclick="rotateIcon('reports-collapse-icon')" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 30 30" fill="none" data-bs-toggle="collapse" data-bs-target="#reportsCollapse" aria-expanded="false" aria-controls="reportsCollapse" style="position: absolute; right: 10px;">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M20.8839 11.6161C21.3345 12.0667 21.3692 12.7758 20.9879 13.2661L20.8839 13.3839L15.8839 18.3839C15.4333 18.8345 14.7242 18.8692 14.2339 18.4879L14.1161 18.3839L9.11611 13.3839C8.62796 12.8957 8.62796 12.1043 9.11611 11.6161C9.56672 11.1655 10.2758 11.1308 10.7661 11.5121L10.8839 11.6161L15 15.7312L19.1161 11.6161C19.5667 11.1655 20.2758 11.1308 20.7661 11.5121L20.8839 11.6161Z" fill="white" />
+                </svg>
+              </button>
+              <div class="collapse" id="reportsCollapse" style="position: relative; top: -10px;">
+                <div class="card card-body" style="background: transparent; padding: 0; padding-left: 20px !important;">
+                  <a href="attachment-form.html" class="collapse-item">
+                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="8" height="2" viewBox="0 0 8 2" fill="none">
+                      <path d="M0 1H8" stroke="#7D8592" stroke-width="2" />
+                    </svg>Purchase Order
+                  </a>
+                  <a class="collapse-item" href="PurchaseOrderReturn.html">
+                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="8" height="2" viewBox="0 0 8 2" fill="none">
+                      <path d="M0 1H8" stroke="#7D8592" stroke-width="2" />
+                    </svg>Purchase Order Return
+                  </a>
+                  <!--  <a class="collapse-item">
+                                    <svg class="me-2" xmlns="http://www.w3.org/2000/svg" width="8" height="2"
+                                        viewBox="0 0 8 2" fill="none">
+                                        <path d="M0 1H8" stroke="#7D8592" stroke-width="2" />
+                                    </svg> Attachment Form</a>  -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="logout-btn px-2" style="position: relative; bottom: 30px;">
+            <a href="/logout" class="nav-link w-100 text-white" style="text-align: center; background: #4365D0; border-radius: 10px; padding-left: 0.8rem; padding-right: 0.8rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="me-2">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M21 2C21.5128 2 21.9355 2.38604 21.9933 2.88338L22 3V21C22 21.5128 21.614 21.9355 21.1166 21.9933L21 22H15C14.4477 22 14 21.5523 14 21C14 20.4872 14.386 20.0645 14.8834 20.0067L15 20H20V4H15C14.4872 4 14.0645 3.61396 14.0067 3.11662L14 3C14 2.48716 14.386 2.06449 14.8834 2.00673L15 2H21ZM10.6129 6.2097L10.7071 6.29289L15.7071 11.2929C16.0676 11.6534 16.0953 12.2206 15.7903 12.6129L15.7071 12.7071L10.7071 17.7071C10.3166 18.0976 9.68342 18.0976 9.29289 17.7071C8.93241 17.3466 8.90468 16.7794 9.2097 16.3871L9.29289 16.2929L12.585 13H3C2.44772 13 2 12.5523 2 12C2 11.4872 2.38604 11.0645 2.88338 11.0067L3 11H12.585L9.29289 7.70711C8.93241 7.34662 8.90468 6.77939 9.2097 6.3871L9.29289 6.29289C9.62334 5.96245 10.1275 5.91161 10.5114 6.14038L10.6129 6.2097Z" fill="white" />
+              </svg>Logout
+            </a>
+          </div>
+        </div>
+        <div class="tab-content col" id="v-pills-tabContent">
+          <nav class="navbar navbar-expand-lg md-none d-none d-lg-block" style="padding: 0;">
+            <div class="container-fluid" style="padding: 0px;">
+              <form id="search-form" style="width: 50% !important;">
+                <div class="input-group" style="border-radius: 50px !important; width: 90%;">
+                  <span class="input-group-text py-2" style="background-color: #fff !important; border-right: 0; border-radius: 0.5rem; border-bottom-right-radius: 0; border-top-right-radius: 0;" id="basic-addon1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 21l-5-5"></path>
+                      <circle cx="10" cy="10" r="8"></circle>
+                    </svg>
+                  </span>
+                  <input type="text" class="form-control py-2 ps-0" placeholder="Search" aria-label="Username" aria-describedby="basic-addon1" style="border-left: 0; border-radius: 0.5rem; border-bottom-left-radius: 0; border-top-left-radius: 0;" />
+                </div>
+              </form>
+
+              <div class="navbar-nav ms-auto" style="gap: 10px;">
+                <div class="nav-item dropdown bg-white" style="border-radius: 13px;">
+                  <a style="color: #7D8592; font-weight: light;" class="nav-link dropdown-toggle" href="#" id="dropdown1" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M4 5H11M9 3V5C9 9.418 6.761 13 4 13M5 9C5 11.144 7.952 12.908 11.7 13M12 20L16 11L20 20M19.0999 18H12.8999" stroke="#4365D0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>ENG
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="dropdown1">
+                    <li>
+                      <a class="dropdown-item" href="#">Action 1</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#">Action 2</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#">Action 3</a>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="nav-item dropdown bg-white" style="border-radius: 13px;">
+                  <a class="nav-link" style="color: #7D8592; font-weight: light;" href="#" id="dropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C15.9511 2 19.169 5.13941 19.2961 9.06012L19.3 9.30112V13.8019C19.3 14.6917 19.9831 15.4218 20.8533 15.4962L21.1332 15.5094C22.2445 15.6286 22.2872 17.2401 21.2614 17.4741L21.1332 17.4954L21 17.5024H3L2.86683 17.4954C1.71106 17.3714 1.71106 15.6334 2.86683 15.5094L3.14668 15.4962C3.96851 15.4259 4.62352 14.7708 4.69376 13.9486L4.7 13.8019V9.30112C4.7 5.26886 7.96828 2 12 2ZM13.557 19.103C14.3277 19.103 14.8087 19.9381 14.422 20.6047C13.9211 21.4684 12.9983 22 12 22C11.0017 22 10.0789 21.4684 9.57796 20.6047C9.21064 19.9714 9.62639 19.1861 10.3296 19.1092L10.443 19.103H13.557ZM6.70442 9.0826C6.81899 6.25617 9.14611 4 12 4C14.9271 4 17.3 6.37335 17.3 9.30112V13.8019L17.3051 13.9984L17.3276 14.2563C17.3797 14.6817 17.504 15.0848 17.6878 15.453L17.714 15.502H6.285L6.3122 15.453L6.41182 15.2362C6.59742 14.7951 6.7 14.3105 6.7 13.8019V9.30112L6.70442 9.0826Z" fill="#0A1629" />
+                    </svg>
+                  </a>
+                </div>
+
+                <div class="nav-item dropdown bg-white d-flex align-items-center" style="border-radius: 13px; padding-left: 0.5rem; padding-right: 0.5rem;">
+                  <img src="icons/photo.png" alt="" />
+                  <p class="ms-2" style="margin-bottom: 0 !important;">Admin Name</p>
+                </div>
+              </div>
+            </div>
+          </nav>
+
+          <!-- Mobile and Tablet Navbar -->
+          <nav class="navbar navbar-expand-lg navbar-light bg-light d-lg-none">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#"><img src="icons/logo.png" alt="" /></a>
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+              <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="d-flex justify-content-between pt-3">
+                  <form id="search-form" style="width: 100% !important;">
+                    <div class="input-group" style="border-radius: 50px !important; width: 100%;">
+                      <span class="input-group-text py-2" style="background-color: #fff !important; border-right: 0; border-radius: 0.5rem; border-bottom-right-radius: 0; border-top-right-radius: 0;" id="basic-addon1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 21l-5-5"></path>
+                          <circle cx="10" cy="10" r="8"></circle>
+                        </svg>
+                      </span>
+                      <input type="text" class="form-control py-2 ps-0" placeholder="Search" aria-label="Username" aria-describedby="basic-addon1" style="border-left: 0; border-radius: 0.5rem; border-bottom-left-radius: 0; border-top-left-radius: 0;" />
+                    </div>
+                  </form>
+                </div>
+
+                <div class="d-flex justify-content-between pt-3 pb-2">
+                  <div class="nav-item dropdown bg-white d-flex align-items-center me-2" style="border-radius: 13px; padding-left: 0.5rem; padding-right: 0.5rem;">
+                    <img src="icons/photo.png" alt="" />
+                    <p class="ms-2 admin-name" style="margin-bottom: 0 !important;">Admin Name</p>
+                  </div>
+
+                  <div class="nav-item dropdown bg-white ms-auto" style="border-radius: 13px;">
+                    <a class="nav-link" style="color: #7D8592; font-weight: light;" href="#" id="dropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C15.9511 2 19.169 5.13941 19.2961 9.06012L19.3 9.30112V13.8019C19.3 14.6917 19.9831 15.4218 20.8533 15.4962L21.1332 15.5094C22.2445 15.6286 22.2872 17.2401 21.2614 17.4741L21.1332 17.4954L21 17.5024H3L2.86683 17.4954C1.71106 17.3714 1.71106 15.6334 2.86683 15.5094L3.14668 15.4962C3.96851 15.4259 4.62352 14.7708 4.69376 13.9486L4.7 13.8019V9.30112C4.7 5.26886 7.96828 2 12 2ZM13.557 19.103C14.3277 19.103 14.8087 19.9381 14.422 20.6047C13.9211 21.4684 12.9983 22 12 22C11.0017 22 10.0789 21.4684 9.57796 20.6047C9.21064 19.9714 9.62639 19.1861 10.3296 19.1092L10.443 19.103H13.557ZM6.70442 9.0826C6.81899 6.25617 9.14611 4 12 4C14.9271 4 17.3 6.37335 17.3 9.30112V13.8019L17.3051 13.9984L17.3276 14.2563C17.3797 14.6817 17.504 15.0848 17.6878 15.453L17.714 15.502H6.285L6.3122 15.453L6.41182 15.2362C6.59742 14.7951 6.7 14.3105 6.7 13.8019V9.30112L6.70442 9.0826Z" fill="#0A1629" />
+                      </svg>
+                    </a>
+                  </div>
+
+                  <div class="nav-item dropdown bg-white ms-2" style="border-radius: 13px;">
+                    <a style="color: #7D8592; font-weight: light;" class="nav-link dropdown-toggle" href="#" id="dropdown1" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 5H11M9 3V5C9 9.418 6.761 13 4 13M5 9C5 11.144 7.952 12.908 11.7 13M12 20L16 11L20 20M19.0999 18H12.8999" stroke="#4365D0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>ENG
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdown1">
+                      <li>
+                        <a class="dropdown-item" href="#">Action 1</a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="#">Action 2</a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="#">Action 3</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </nav>
+
+          <div class="pt-4">
+            <div class="py-3" style="background-color: white; height: 100%; border-radius: 18px;">
+              <h2 class="container-fluid">Sale Order Return</h2>
+              <hr />
+
+              <form class="container-fluid mt-4">
+                <div class="row">
+                  <!-- Customer Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="customer" class="form-label pb-1">Refund_Status</label>
+                      <select class="form-select py-2" id="customer" name="customer" style="border-radius: 13px;">
+                        <option value="">Select Customer</option>
+                        <option value="customer1">Customer 1</option>
+                        <option value="customer2">Customer 2</option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- Booking Manager Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="booking_man" class="form-label pb-1">Product</label>
+                      <select class="form-select py-2" id="booking_man" name="booking_man" style="border-radius: 13px;">
+                        <option value="">Select Product</option>
+                        <option value="manager1">Product 1</option>
+                        <option value="manager2">Product 2</option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- Area Field -->
+
+                  <!-- Delivery Man Field -->
+
+                  <!-- City Field -->
+
+                  <!-- Order Date Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="order_date" class="form-label pb-1">Return Date:</label>
+                      <input type="date" class="form-control py-2" id="order_date" name="order_date" style="border-radius: 13px;" />
+                    </div>
+                  </div>
+                  <!-- Total Amount Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="total_amount" class="form-label pb-1">Order</label>
+                      <input type="number" class="form-control py-2" id="total_amount" name="total_amount" placeholder="Total Amount" style="border-radius: 13px;" />
+                    </div>
+                  </div>
+                  <!-- Pending Amount Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="pending_amount" class="form-label pb-1">Return Amount:</label>
+                      <input type="number" class="form-control py-2" id="pending_amount" name="pending_amount" placeholder="Pending Amount" style="border-radius: 13px;" />
+                    </div>
+                  </div>
+                  <!-- Paid Amount Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="paid_amount" class="form-label pb-1">Refund Status</label>
+                      <input type="number" class="form-control py-2" id="paid_amount" name="paid_amount" placeholder="Paid Amount" style="border-radius: 13px;" />
+                    </div>
+                  </div>
+                  <!-- Payment Status Field -->
+
+                  <!-- Status Field -->
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label for="reason" class="form-label pb-1">Reason:</label>
+                      <textarea class="form-control py-2" id="reason" name="reason" rows="3" placeholder="Enter your reason here..." style="border-radius: 13px;"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

@@ -62,7 +62,6 @@ def update_order(request, order_id):
 
     ordered_product_ids = [order_product.product.id for order_product in order_products]
 
-    print(f'ordered_product_ids: {ordered_product_ids}')
     customers = Customer.objects.all()
     booking_mans = BookingMan.objects.all()
     citys = City.objects.all()
@@ -94,7 +93,31 @@ def delete_order(request, order_id):
 
     order.delete()
 
-    return redirect('/order_list/')
+    return redirect('/sale_order_list/')
+
+def delete_purchase_order(request, order_id):
+    purchase_order = get_object_or_404(PurchaseOrder, pk=order_id)
+
+    purchase_order_products = PurchaseOrderProduct.objects.filter(purchase_order=purchase_order)
+
+    for purchase_order_product in purchase_order_products:
+        product = purchase_order_product.product
+        product.stock_quantity += purchase_order_product.quantity
+        product.save()
+        purchase_order_product.delete()
+
+    GeneralLedgerEntry.objects.filter(
+            description__icontains=f"Order #{purchase_order.id}"
+        ).delete()
+
+    Payment.objects.filter(
+            content_type=ContentType.objects.get_for_model(PurchaseOrder),
+            object_id=purchase_order.id
+        ).delete()
+
+    purchase_order.delete()
+
+    return redirect('/purchase_order_list/')
 
 @csrf_exempt
 def create_api_order(request):
@@ -138,13 +161,13 @@ def update_api_order(request, order_id):
     try:
         data = json.loads(request.body)
 
-        # Fetch the order object or return an error
         try:
             order = Order.objects.get(id=order_id)
         except Order.DoesNotExist:
             return JsonResponse({'error': 'Order not found'}, status=404)
 
-        # Update order fields from the payload
+        order.pending_amount = order.pending_amount or 0
+
         order.customer = Customer.objects.get(id=data['customer'])
         order.booking_man = BookingMan.objects.get(id=data['booking_man'])
         order.delivery_man = DeliveryMan.objects.get(id=data['delivery_man'])
@@ -153,56 +176,52 @@ def update_api_order(request, order_id):
         order.total_amount = Decimal(data['total_amount'])
         order.paid_amount = Decimal(data.get('paid_amount', order.paid_amount))
         order.status = data['status']
-        order.payment_status = data['payment_status']  # This may get recalculated in save()
+        order.payment_status = data['payment_status']
 
-        # Save the order to calculate pending amount and record ledger entries
         order.save()
 
-        # Handle product updates in the order
-        product_ids_in_payload = {item['product'] for item in data['products']}
+        product_ids_in_payload = {item['product_id'] for item in data['products']}
         existing_order_products = OrderProduct.objects.filter(order=order)
 
         for product_data in data['products']:
-            product = Product.objects.get(id=product_data['product'])
+            product = Product.objects.get(id=product_data['product_id'])
             quantity = int(product_data['quantity'])
 
-            # Get or create the OrderProduct instance
+            product.stock_quantity = product.stock_quantity or 0
+
             order_product, created = OrderProduct.objects.get_or_create(order=order, product=product)
 
             if created:
-                # New product - decrease the stock and set the quantity
-                product.stock_quantity -= quantity
-                product.save()
-                order_product.quantity = quantity
-                order_product.save()
+                if product.stock_quantity >= quantity:
+                    product.stock_quantity -= quantity
+                    product.save()
+                    order_product.quantity = quantity
+                    order_product.save()
+                else:
+                    return JsonResponse({'error': f'Not enough stock for product {product.id}'}, status=400)
             else:
-                # Update quantity and handle stock adjustments
                 if order_product.quantity != quantity:
-                    # Revert previous stock adjustment (increase stock for previous quantity)
                     product.stock_quantity += order_product.quantity
                     product.save()
 
-                    # Update to the new quantity and decrease stock for the new quantity
-                    product.stock_quantity -= quantity
-                    product.save()
+                    if product.stock_quantity >= quantity:
+                        product.stock_quantity -= quantity
+                        product.save()
+                        order_product.quantity = quantity
+                        order_product.save()
+                    else:
+                        return JsonResponse({'error': f'Not enough stock for product {product.id}'}, status=400)
 
-                    order_product.quantity = quantity
-                    order_product.save()
-
-        # Remove products no longer in the updated payload (increase stock when removed)
         products_to_remove = existing_order_products.exclude(product_id__in=product_ids_in_payload)
         for order_product in products_to_remove:
             product = order_product.product
-            product.stock_quantity += order_product.quantity  # Increase stock quantity
+            product.stock_quantity += order_product.quantity
             product.save()
 
-            # Delete the order product
             order_product.delete()
 
-        # Record general ledger entries
         order.record_general_ledger_entries()
 
-        # Prepare response data
         order_products = OrderProduct.objects.filter(order=order).select_related('product')
         products_list = [
             {
@@ -225,6 +244,7 @@ def update_api_order(request, order_id):
         return JsonResponse({'error': str(ve)}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
 
 def delete_api_order(request, order_id):
     try:
@@ -261,19 +281,16 @@ def create_api_purchase_order(request):
     try:
         data = json.loads(request.body)
 
-        # Validate required fields
         required_fields = ['supplier', 'products', 'status', 'paid_amount']
         for field in required_fields:
             if field not in data:
                 return JsonResponse({'error': f"{field} is required."}, status=400)
 
-        # Fetch supplier
         try:
             supplier = Supplier.objects.get(id=data['supplier'])
         except Supplier.DoesNotExist:
             return JsonResponse({'error': 'Supplier not found.'}, status=404)
 
-        # Create the purchase order
         purchase_order = PurchaseOrder(
             supplier=supplier,
             status=data['status'],
@@ -281,20 +298,17 @@ def create_api_purchase_order(request):
         )
         purchase_order.save()
 
-        # Process products
         total_amount = Decimal(0)
         for product_data in data['products']:
-            product_id = product_data['product']
-            quantity = product_data['quantity']
+            product_id = product_data['product_id']
+            quantity = int(product_data['quantity'])
             price = Decimal(product_data['price'])
 
-            # Fetch product
             try:
                 product = Product.objects.get(id=product_id)
             except Product.DoesNotExist:
                 return JsonResponse({'error': f"Product with ID {product_id} not found."}, status=404)
 
-            # Create PurchaseOrderProduct entry
             PurchaseOrderProduct.objects.create(
                 purchase_order=purchase_order,
                 product=product,
@@ -302,18 +316,15 @@ def create_api_purchase_order(request):
                 price=price
             )
 
-            # Calculate total amount
             total_amount += price * quantity
 
-        # Update purchase order totals
         purchase_order.total_amount = total_amount
         purchase_order.calculate_total_amount()
         purchase_order.save()
 
-        # Prepare response data
         products_list = [
             {
-                "product_id": product_data['product'],
+                "product_id": product_data['product_id'],
                 "quantity": product_data['quantity'],
                 "price": str(product_data['price']),
             }
@@ -341,63 +352,53 @@ def update_api_purchase_order(request, order_id):
     try:
         data = json.loads(request.body)
 
-        # Fetch the existing purchase order
         try:
             purchase_order = PurchaseOrder.objects.get(id=order_id)
         except PurchaseOrder.DoesNotExist:
             return JsonResponse({'error': 'Purchase Order not found'}, status=404)
 
-        # Update basic details
         purchase_order.status = data.get('status', purchase_order.status)
         purchase_order.paid_amount = Decimal(data.get('paid_amount', purchase_order.paid_amount))
-
-        # Recalculate pending amount
         purchase_order.calculate_total_amount()
 
-        # Process products
         total_amount = Decimal(0)
-        existing_products = {product.product.id for product in purchase_order.purchase_order_products.all()}
-        product_ids_in_payload = {product_data['product'] for product_data in data['products']}
+        product_ids_in_payload = {product_data['product_id'] for product_data in data['products']}
 
-        # Handle product updates and additions
         for product_data in data['products']:
-            product_id = product_data['product']
-            quantity = product_data['quantity']
+            product_id = product_data['product_id']
+            quantity = int(product_data['quantity'])
             price = Decimal(product_data['price'])
 
-            # Fetch product
             try:
                 product = Product.objects.get(id=product_id)
             except Product.DoesNotExist:
                 return JsonResponse({'error': f"Product with ID {product_id} not found."}, status=404)
 
-            # Get or create PurchaseOrderProduct entry
             order_product, created = PurchaseOrderProduct.objects.get_or_create(
-                purchase_order=purchase_order, product=product)
+                purchase_order=purchase_order,
+                product=product,
+                defaults={'quantity': quantity, 'price': price}
+            )
 
-            # Update or add product quantity and price
-            order_product.quantity = quantity
-            order_product.price = price
-            order_product.save()
+            if not created:
+                order_product.quantity = quantity
+                order_product.price = price
+                order_product.save()
 
             total_amount += price * quantity
 
-        # Remove products no longer in the updated payload
-        products_to_remove = purchase_order.purchase_order_products.exclude(
-            product_id__in=product_ids_in_payload)
-        for order_product in products_to_remove:
-            order_product.delete()
+        # Remove products not in the payload
+        purchase_order.purchase_order_products.exclude(product_id__in=product_ids_in_payload).delete()
 
-        # Update the total amount of the purchase order
+        # Update purchase order totals
         purchase_order.total_amount = total_amount
         purchase_order.calculate_total_amount()
         purchase_order.save()
 
-        # If there is a payment made, record the payment and adjust the ledger
         if purchase_order.paid_amount > 0:
             purchase_order.record_payment(purchase_order.paid_amount)
 
-        # Prepare the response
+        # Prepare response
         products_list = [
             {
                 "product_id": order_product.product.id,
@@ -415,6 +416,90 @@ def update_api_purchase_order(request, order_id):
             'pending_amount': str(purchase_order.pending_amount),
             'payment_status': purchase_order.payment_status,
             'products': products_list
+        })
+
+    except ValidationError as ve:
+        return JsonResponse({'error': str(ve)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+@require_http_methods(["PUT"])
+def return_order_api(request, order_id):
+    try:
+        data = json.loads(request.body)
+
+        # Fetch the order
+        try:
+            order = Order.objects.get(id=order_id)
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+
+        # Create an OrderReturn instance
+        total_return_amount = Decimal(data.get('total_return_amount', 0))
+        returned_amount = Decimal(data.get('returned_amount', 0))
+        refund_status = data.get('refund_status', None)
+        reason = data.get('reason', None)
+
+        order_return = OrderReturn.objects.create(
+            order=order,
+            total_return_amount=total_return_amount,
+            returned_amount=returned_amount,
+            refund_status=refund_status,
+            reason=reason
+        )
+
+        # Process returned products
+        for product_data in data.get('returned_products', []):
+            product_id = product_data['product']
+            returned_quantity = product_data['returned_quantity']
+
+            # Validate product exists
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return JsonResponse({'error': f"Product with ID {product_id} not found."}, status=404)
+
+            # Validate product belongs to the order
+            order_product = order.order_products.filter(product=product).first()
+            if not order_product:
+                return JsonResponse({'error': f"Product with ID {product_id} is not part of Order #{order_id}"}, status=400)
+
+            # Validate returned quantity
+            if returned_quantity > order_product.quantity:
+                return JsonResponse({
+                    'error': f"Returned quantity {returned_quantity} exceeds ordered quantity {order_product.quantity} for product ID {product_id}."
+                }, status=400)
+
+            # Create OrderReturnProduct and update stock
+            OrderReturnProduct.objects.create(
+                order_return=order_return,
+                product=product,
+                returned_quantity=returned_quantity
+            )
+
+            product.stock_quantity += returned_quantity
+            product.save()
+
+        # Recalculate refund status
+        order_return.record_return_entries()
+
+        # Prepare response
+        returned_products_list = [
+            {
+                'product_id': returned_product.product.id,
+                'returned_quantity': returned_product.returned_quantity
+            }
+            for returned_product in order_return.returned_products.all()
+        ]
+
+        return JsonResponse({
+            'status': 'success',
+            'order_return_id': order_return.id,
+            'total_return_amount': str(order_return.total_return_amount),
+            'returned_amount': str(order_return.returned_amount),
+            'refund_status': order_return.refund_status,
+            'returned_products': returned_products_list
         })
 
     except ValidationError as ve:
@@ -468,3 +553,58 @@ def delete_api_purchase_order(request, order_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+def dashboard(request):
+    return render(request, 'dashboard.html')
+
+def sale_order_list(request):
+    orders = Order.objects.all()
+    return render(request, 'saleOrderList.html', {'orders':orders})
+
+def create_sale_order(request):
+    customers = Customer.objects.all()
+    booking_mans = BookingMan.objects.all()
+    citys = City.objects.all()
+    areas = Area.objects.all()
+    delivery_mans = DeliveryMan.objects.all()
+    products = Product.objects.all()
+
+    return render(request, 'createSaleOrder.html', {'customers':customers, 'booking_mans':booking_mans, 'areas':areas, 'delivery_mans':delivery_mans, 'citys':citys, 'products': products})
+
+def update_sale_order(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    order_products = order.order_products.all()
+
+    print(f'order_products: {order_products}')
+
+    ordered_product_ids = [order_product.product.id for order_product in order_products]
+    
+    customers = Customer.objects.all()
+    booking_mans = BookingMan.objects.all()
+    citys = City.objects.all()
+    areas = Area.objects.all()
+    delivery_mans = DeliveryMan.objects.all()
+    products = Product.objects.all()
+
+    return render(request, 'updateSaleOrder.html', {'customers':customers, 'booking_mans':booking_mans, 'areas':areas, 'delivery_mans':delivery_mans, 'citys':citys, 'products': products, 'order':order, 'order_products':order_products, 'ordered_product_ids':ordered_product_ids})
+
+def purchase_order_list(request):
+    orders = PurchaseOrder.objects.all()
+    return render(request, 'purchaseOrderList.html', {'orders':orders})
+
+def create_purchase_order(request):
+    suppliers = Supplier.objects.all()
+    products = Product.objects.all()
+
+    return render(request, 'createPurchaseOrder.html', {'suppliers':suppliers, 'products': products})
+
+def update_purchase_order(request, order_id):
+    purchase_order = get_object_or_404(PurchaseOrder, pk=order_id)
+    order_products = purchase_order.purchase_order_products.all()
+ 
+    print(f'order_products: {order_products}')
+
+    ordered_product_ids = [order_product.product.id for order_product in order_products]
+
+    suppliers = Supplier.objects.all()
+    products = Product.objects.all()
+    return render(request, 'updatePurchaseOrder.html', {'suppliers':suppliers, 'products': products, 'order':purchase_order, 'order_products': order_products, 'ordered_product_ids':ordered_product_ids})

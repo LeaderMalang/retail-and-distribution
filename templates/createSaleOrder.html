@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Sale Order
+{% endblock %}
+
+{% block content %}
+  <div>
+    <div class="tab-content" id="pills-tabContent">
+      <div class="tab-pane fade show active" id="pills-employee" role="tabpanel" aria-labelledby="pills-employee-tab">
+        <div style="background-color: white; border-radius: 18px;">
+          <div class="py-3" style="background-color: white; height: 100%; border-radius: 18px;">
+            <h2 class="container-fluid">Sale Order</h2>
+            <hr />
+
+            <form id="orderForm" class="container-fluid mt-4">
+              <div class="row">
+                <!-- Customer Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="customer" class="form-label pb-1">Customer:</label>
+                    <select class="form-select me-2" id="customer" name="customer">
+                      {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <!-- Booking Manager Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="booking_man" class="form-label pb-1">Booking Man:</label>
+                    <select class="form-select me-2" id="bookingMan" name="bookingMan">
+                      {% for booking_man in booking_mans %}
+                        <option value="{{ booking_man.id }}">{{ booking_man.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <!-- Area Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="area" class="form-label pb-1">Area:</label>
+                    <select class="form-select me-2" id="area" name="area">
+                      {% for area in areas %}
+                        <option value="{{ area.id }}">{{ area.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <!-- Delivery Man Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="delivery_man" class="form-label pb-1">Delivery Man:</label>
+                    <select class="form-select me-2" id="deliveryMan" name="deliveryMan">
+                      {% for delivery_man in delivery_mans %}
+                        <option value="{{ delivery_man.id }}">{{ delivery_man.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <!-- City Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="city" class="form-label pb-1">City:</label>
+                    <select class="form-select me-2" id="city" name="city">
+                      {% for city in citys %}
+                        <option value="{{ city.id }}">{{ city.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <!-- Order Date Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="order_date" class="form-label pb-1">Order Date:</label>
+                    <input type="date" class="form-control py-2" id="order_date" name="order_date" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Total Amount Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="total_amount" class="form-label pb-1">Total Amount:</label>
+                    <input type="number" class="form-control py-2" id="total_amount" name="total_amount" placeholder="Total Amount" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Pending Amount Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="pending_amount" class="form-label pb-1">Pending Amount:</label>
+                    <input type="number" class="form-control py-2" id="pending_amount" name="pending_amount" placeholder="Pending Amount" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Paid Amount Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="paid_amount" class="form-label pb-1">Paid Amount:</label>
+                    <input type="number" class="form-control py-2" id="paid_amount" name="paid_amount" placeholder="Paid Amount" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Payment Status Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="payment_status" class="form-label pb-1">Payment Status:</label>
+                    <select class="form-select py-2" id="payment_status" name="payment_status" style="border-radius: 13px;">
+                      <option value="PAID">Paid</option>
+                      <option value="PARTIALLY PAID">Partially Paid</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Status Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="status" class="form-label pb-1">Status:</label>
+                    <select class="form-select py-2" id="status" name="status" style="border-radius: 13px;">
+                      <option value="Pending">Pending</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Returned">Returned</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <h2 style="padding-top: 10px;" class="container-fluid">Ordered Product</h2>
+              <div style="display: flex; gap: 20px;padding-top: 40px;">
+                <div class="mb-3 w-50">
+                  <label for="products" class="form-label pb-1">Product</label>
+                  <select class="form-select me-2" name="products[]">
+                    {% for product in products %}
+                      <option value="{{ product.id }}">{{ product.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-5">
+                  <div class="mb-3 w-30">
+                    <label for="quantity[]" class="form-label pb-1">Quantity</label>
+                    <input type="number" class="form-control py-2" id="quantity[]" name="quantity" placeholder="Quantity" style="border-radius: 13px;" />
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div class="button" style="padding-top: 5rem;">
+              <input id="saveOrderBtn" class="btn btn-primary" type="button" value="Submit" style="width: 158px; height: 44px; border-radius: 16px; background-color: #4365D0; box-shadow: 0px 6px 12px 0px #3F8CFF43;" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- attendance sheet -->
+      <div class="tab-pane fade" id="pills-client" role="tabpanel" aria-labelledby="pills-client-tab">
+        <div style="background-color: white; border-radius: 18px;">
+          <div class="py-3" style="background-color: white; height: 420px; border-radius: 18px;">
+            <h2 class="container-fluid">Client</h2>
+            <hr />
+
+            <form class="container-fluid mt-4">
+              <div class="row">
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="role" class="form-label pb-1">Role:</label>
+                    <input type="text" class="form-control py-2" id="role" name="role" placeholder="Business Manager" style="border-radius: 13px;" />
+                  </div>
+                </div>
+              </div>
+              <div class="button" style="padding-top: 5rem;">
+                <input class="btn btn-primary" type="submit" value="Submit" style="width: 158px; height: 44px; border-radius: 16px; background-color: #4365D0; box-shadow: 0px 6px 12px 0px #3F8CFF43;" />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    function getCookie(name) {
+      let cookieValue = null
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';')
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim()
+          if (cookie.substring(0, name.length + 1) === name + '=') {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+            break
+          }
+        }
+      }
+      return cookieValue
+    }
+    
+    $(document).ready(function () {
+      // CSRF Token for Django
+      const csrfToken = getCookie('csrftoken')
+    
+      // Submit order form via AJAX
+      $('#saveOrderBtn').on('click', function (e) {
+        e.preventDefault()
+    
+        // Collect form data
+        const orderData = {
+          customer: $('#customer').val(),
+          booking_man: $('#bookingMan').val(),
+          area: $('#area').val(),
+          delivery_man: $('#deliveryMan').val(),
+          city: $('#city').val(),
+          order_date: $('#order_date').val(),
+          total_amount: $('#total_amount').val(),
+          pending_amount: $('#pending_amount').val(),
+          paid_amount: $('#paid_amount').val(),
+          payment_status: $('#payment_status').val(),
+          status: $('#status').val(),
+          products: []
+        }
+    
+        // Collect product rows
+        $('select[name="products[]"]').each(function () {
+          orderData.products.push({
+            product_id: $(this).val(),
+            quantity: $(this).closest('.product-row').find('input[name="quantity[]"]').val()
+          })
+        })
+    
+        // Send AJAX request
+        $.ajax({
+          url: '/api/orders/', // Replace with your API endpoint
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken // Add CSRF Token
+          },
+          data: JSON.stringify(orderData),
+          contentType: 'application/json',
+          success: function (response) {
+            alert('Order submitted successfully!')
+            console.log(response)
+            // Optionally clear the form
+            $('#orderForm')[0].reset()
+          },
+          error: function (error) {
+            alert('Error submitting order. Please try again.')
+            console.error(error)
+          }
+        })
+      })
+    
+      // Add product row functionality
+      $('#addProductBtn').on('click', function () {
+        const productRow = $('.product-row').first().clone()
+        productRow.find('select').val('')
+        productRow.find('input').val('')
+        $('#productFieldsContainer').append(productRow)
+      })
+    
+      // Remove product row functionality
+      $(document).on('click', '.remove-row', function () {
+        $(this).closest('.product-row').remove()
+      })
+    })
+  </script>
+{% endblock %}

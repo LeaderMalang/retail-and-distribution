@@ -131,7 +131,7 @@ class Order(models.Model):
         return f"Order #{self.id} by {self.customer.name}"
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)  # Save the order first
+        super().save(*args, **kwargs)
 
         self.pending_amount = self.total_amount - self.paid_amount
 
@@ -680,3 +680,12 @@ class DeliveryRoute(models.Model):
 
     def __str__(self):
         return f"Route for Order #{self.order.id}"
+
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    website_category_id = models.CharField(max_length=255, blank=True, null=True)
+
+class ProductCategory(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
