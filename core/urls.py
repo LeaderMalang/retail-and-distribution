@@ -14,4 +14,15 @@ urlpatterns = [
     path('api/purchase_order/', views.create_api_purchase_order, name='create_api_purchase_order'),
     path('api/purchase_order/<int:order_id>/', views.update_api_purchase_order, name='update_api_purchase_order'),
     path('api/purchase_order/<int:order_id>/', views.delete_api_purchase_order, name='delete_api_purchase_order'),
+
+    
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('sale_order/', views.create_sale_order, name='create_sale_order'),
+    path('sale_order/<int:order_id>/', views.update_sale_order, name='update_sale_order'),
+    path('sale_order_list/', views.sale_order_list, name='sale_order_list'),
+
+
+    path('purchase_order/', views.create_purchase_order, name='create_purchase_order'),
+    path('purchase_order/<int:order_id>/', views.update_purchase_order, name='update_purchase_order'),
+    path('purchase_order_list/', views.purchase_order_list, name='purchase_order_list'),
 ]

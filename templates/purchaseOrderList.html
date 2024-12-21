@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  List All Purchase Orders
+{% endblock %}
+
+{% block content %}
+  <div class="pt-4">
+    <div style="background-color: white; border-radius: 18px;">
+      <div class="container-fluid attendence-tab-head d-flex align-items-center py-3" style="background-color: #4365D0; border-radius: 18px; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+        <h5 class="me-3 mb-0 text-white">List All Purchase Orders</h5>
+      </div>
+      <div class="attendence-table" style="overflow-x:auto;">
+        <table class="table table-bordered" style="margin-bottom: 0px;">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Supplier</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          {% for order in orders %}
+            <tbody id="order-list">
+              <td># {{ order.id }}</td>
+              <td>{{ order.supplier.name }}</td>
+              <td>{{ order.total_amount }}</td>
+              <td>{{ order.status }}</td>
+              <td>
+                <a href="/purchase_order/{{ order.id }}"><i class="bi bi-pencil-fill"></i></a>
+                <a href="{% url 'delete_order' order.id %}"><i class="bi bi-trash-fill"></i></a>
+                {% comment %} <a href="{% url 'return_order' order.id %}"><i class="bi bi-arrow-repeat"></i></a> {% endcomment %}
+              </td>
+            </tbody>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

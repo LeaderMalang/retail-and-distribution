@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Update Sale Order
+{% endblock %}
+
+{% block content %}
+  <div>
+    <div class="tab-content" id="pills-tabContent">
+      <div class="tab-pane fade show active" id="pills-employee" role="tabpanel" aria-labelledby="pills-employee-tab">
+        <div style="background-color: white; border-radius: 18px;">
+          <div class="py-3" style="background-color: white; height: 100%; border-radius: 18px;">
+            <h2 class="container-fluid">Update Sale Order</h2>
+            <hr />
+
+            <form id="orderForm" class="container-fluid mt-4">
+              <div class="row">
+                <!-- Customer Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="customer" class="form-label pb-1">Customer:</label>
+                    <select class="form-select me-2" id="customer" name="customer">
+                        {% for customer in customers %}
+                          <option value="{{ customer.id }}" {% if order.customer.id == customer.id %}selected{% endif %}>
+                            {{ customer.name }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                  </div>
+                </div>
+                <!-- Booking Manager Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="booking_man" class="form-label pb-1">Booking Man:</label>
+                    <select class="form-select me-2" id="bookingMan" name="bookingMan">
+                        {% for booking_man in booking_mans %}
+                          <option value="{{ booking_man.id }}" {% if order.booking_man.id == booking_man.id %}selected{% endif %}>
+                            {{ booking_man.name }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                  </div>
+                </div>
+                <!-- Area Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="area" class="form-label pb-1">Area:</label>
+                    <select class="form-select me-2" id="area" name="area">
+                        {% for area in areas %}
+                          <option value="{{ area.id }}" {% if order.area.id == area.id %}selected{% endif %}>
+                            {{ area.name }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                  </div>
+                </div>
+                <!-- Delivery Man Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="delivery_man" class="form-label pb-1">Delivery Man:</label>
+                    <select class="form-select me-2" id="deliveryMan" name="deliveryMan">
+                        {% for delivery_man in delivery_mans %}
+                          <option value="{{ delivery_man.id }}" {% if order.delivery_man.id == delivery_man.id %}selected{% endif %}>
+                            {{ delivery_man.name }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                  </div>
+                </div>
+                <!-- City Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="city" class="form-label pb-1">City:</label>
+                    <select class="form-select me-2" id="city" name="city">
+                        {% for city in citys %}
+                          <option value="{{ city.id }}" {% if order.city.id == city.id %}selected{% endif %}>
+                            {{ city.name }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                  </div>
+                </div>
+                <!-- Total Amount Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="total_amount" class="form-label pb-1">Total Amount:</label>
+                    <input type="number" class="form-control py-2" id="total_amount" name="total_amount" placeholder="Total Amount" value="{{order.total_amount}}" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Pending Amount Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="pending_amount" class="form-label pb-1">Pending Amount:</label>
+                    <input type="number" class="form-control py-2" id="pending_amount" name="pending_amount" placeholder="Pending Amount" value="{{order.pending_amount}}" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Paid Amount Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="paid_amount" class="form-label pb-1">Paid Amount:</label>
+                    <input type="number" value="{{order.paid_amount}}" class="form-control py-2" id="paid_amount" name="paid_amount" placeholder="Paid Amount" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <!-- Payment Status Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="payment_status" class="form-label pb-1">Payment Status:</label>
+                    <select class="form-select" id="paymentStatus" name="paymentStatus" required>
+                        <option value="PAID" {% if order.payment_status == 'PAID' %}selected{% endif %}>Paid</option>
+                        <option value="PARTIALLY PAID" {% if order.payment_status == 'PARTIALLY PAID' %}selected{% endif %}>Partially Paid</option>
+                      </select>
+                  </div>
+                </div>
+                <!-- Status Field -->
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="status" class="form-label pb-1">Status:</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                        <option value="Delivered" {% if order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+                      </select>
+                  </div>
+                </div>
+              </div>
+              <hr />
+              <h2 style="padding-top: 10px;" class="container-fluid">Ordered Product</h2>
+              {% for order_product in order_products %}
+              <div id="productFieldsContainer">
+              <div class="row product-row">
+                <div class="mb-3 w-50">
+                  <label for="products" class="form-label pb-1">Product</label>
+                  <select class="form-select me-2" name="products[]">
+                    {% for product in products %}
+                      <option value="{{ product.id }}" {% if product.id == order_product.product.id %}selected{% endif %}>
+                        {{ product.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-5">
+                  <div class="mb-3 w-30">
+                    <label for="quantity[]" class="form-label pb-1">Quantity</label>
+                    <input type="number" class="form-control py-2" name="quantities[]" value="{{ order_product.quantity }}" placeholder="Quantity" style="border-radius: 13px;" />
+                  </div>
+                </div>
+                <div class="col-md-1 d-flex align-items-center mt-3">
+                  <button type="button" id="addProductBtn" class="btn btn-success">+</button>
+                  <button type="button" class="btn btn-danger remove-row  ms-2">X</button>
+                </div>
+              </div>
+              </div>
+            {% endfor %}
+
+            </form>
+            <div class="button" style="padding-top: 5rem;">
+              <input id="saveOrderBtn" class="btn btn-primary" type="button" value="Submit" style="width: 158px; height: 44px; border-radius: 16px; background-color: #4365D0; box-shadow: 0px 6px 12px 0px #3F8CFF43;" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- attendance sheet -->
+      <div class="tab-pane fade" id="pills-client" role="tabpanel" aria-labelledby="pills-client-tab">
+        <div style="background-color: white; border-radius: 18px;">
+          <div class="py-3" style="background-color: white; height: 420px; border-radius: 18px;">
+            <h2 class="container-fluid">Client</h2>
+            <hr />
+
+            <form class="container-fluid mt-4">
+              <div class="row">
+                <div class="col-md-5">
+                  <div class="mb-3">
+                    <label for="role" class="form-label pb-1">Role:</label>
+                    <input type="text" class="form-control py-2" id="role" name="role" placeholder="Business Manager" style="border-radius: 13px;" />
+                  </div>
+                </div>
+              </div>
+              <div class="button" style="padding-top: 5rem;">
+                <input class="btn btn-primary" type="submit" value="Submit" style="width: 158px; height: 44px; border-radius: 16px; background-color: #4365D0; box-shadow: 0px 6px 12px 0px #3F8CFF43;" />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#addProductBtn').on('click', function () {
+        // Clone the first product row to create a new one
+        const productRow = $('.product-row').first();
+        const newProductRow = productRow.clone();
+      
+        // Clear the input values for the new row
+        newProductRow.find('select').val('');
+        newProductRow.find('input').val('');
+      
+        // Append the new row to the product fields container
+        $('#productFieldsContainer').append(newProductRow);
+      
+        // Optionally, make sure the new row has a unique class or ID for removal
+        newProductRow.find('.remove-row').on('click', function () {
+          newProductRow.remove();
+        });
+      });
+  
+      // Optional: You can add event listener for removing rows if you want
+      $(document).on('click', '.remove-row', function () {
+        $(this).closest('.product-row').remove();
+      });
+  
+      function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + '=') {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+  
+      $('#saveOrderBtn').on('click', function (event) {
+        event.preventDefault(); // Prevent default form submission
+      
+        // Collect the order data
+        const orderData = {
+          customer: $('#customer').val(),
+          booking_man: $('#bookingMan').val(),
+          area: $('#area').val(),
+          delivery_man: $('#deliveryMan').val(),
+          city: $('#city').val(),
+          total_amount: $('#total_amount').val(),
+          pending_amount: $('#pending_amount').val(),
+          status: $('#status').val(),
+          payment_status: $('#paymentStatus').val(),
+          // Collecting the products and quantities
+          products: $('select[name="products[]"]').map(function () {
+            return $(this).val();
+          }).get(),
+          quantities: $('input[name="quantities[]"]').map(function () {
+            return $(this).val();
+          }).get()
+        };
+      
+        // Prepare payload for API request
+        const payload = {
+          customer: orderData.customer,
+          booking_man: orderData.booking_man,
+          area: orderData.area,
+          delivery_man: orderData.delivery_man,
+          city: orderData.city,
+          total_amount: orderData.total_amount,
+          pending_amount: orderData.pending_amount,
+          status: orderData.status,
+          payment_status: orderData.payment_status,
+          products: orderData.products.map((product, index) => ({
+            product_id: product,
+            quantity: orderData.quantities[index]
+          }))
+        };
+      
+        $.ajax({
+          url: '/api/orders/{{ order.id }}/',
+          method: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify(payload),
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          success: function (data) {
+            console.log('Success:', data);
+            alert('Order updated successfully!');
+          },
+          error: function (error) {
+            console.error('Error:', error);
+            alert('There was an error updating the order.');
+          }
+        });
+      });
+      
+    });
+  </script>
+  
+{% endblock %}

@@ -1,14 +1,8 @@
 from django.contrib import admin
-from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit, DeliveryMan, GeneralLedgerAccount, GeneralLedgerEntry, Payment, OrderReturnProduct, PurchaseOrderReturn, PurchaseOrderReturnProduct
+from .models import Product, Customer, Order, DeliveryRoute, Employee, OrderProduct, Supplier, PurchaseOrder, PurchaseOrderProduct, AccountTransaction, InventoryTransaction, AccountReceivable, AccountPayable, FinancialReport, InventoryBatch, OrderReturn, ProductUnit, DeliveryMan, GeneralLedgerAccount, GeneralLedgerEntry, Payment, OrderReturnProduct, PurchaseOrderReturn, PurchaseOrderReturnProduct, Category, ProductCategory
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import messages
-
-
-admin.site.register(Supplier)
-admin.site.register(GeneralLedgerAccount)
-admin.site.register(GeneralLedgerEntry)
-admin.site.register(Payment)
 
 class ProductUnitInlineFormset(forms.BaseInlineFormSet):
     def clean(self):
@@ -136,6 +130,12 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 # Register models with admin
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Category)
+admin.site.register(ProductCategory)
+admin.site.register(Supplier)
+admin.site.register(GeneralLedgerAccount)
+admin.site.register(GeneralLedgerEntry)
+admin.site.register(Payment)
 admin.site.register(Customer)
 admin.site.register(DeliveryMan)
 admin.site.register(InventoryBatch, InventoryBatchAdmin)
