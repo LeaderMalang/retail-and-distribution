@@ -123,22 +123,30 @@
               </div>
               <hr />
               <h2 style="padding-top: 10px;" class="container-fluid">Ordered Product</h2>
-              <div style="display: flex; gap: 20px;padding-top: 40px;">
-                <div class="mb-3 w-50">
-                  <label for="products" class="form-label pb-1">Product</label>
-                  <select class="form-select me-2" name="products[]">
-                    {% for product in products %}
-                      <option value="{{ product.id }}">{{ product.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-5">
-                  <div class="mb-3 w-30">
-                    <label for="quantity[]" class="form-label pb-1">Quantity</label>
-                    <input type="number" class="form-control py-2" id="quantity[]" name="quantity" placeholder="Quantity" style="border-radius: 13px;" />
+              <div id="productFieldsContainer">
+                <div class="row product-row">
+                  <div class="mb-3 w-50">
+                    <label for="products" class="form-label pb-1">Product</label>
+                    <select class="form-select me-2" name="products[]">
+                      {% for product in products %}
+                        <option value="{{ product.id }}" {% if product.id == order_product.product.id %}selected{% endif %}>
+                          {{ product.name }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-5">
+                    <div class="mb-3 w-30">
+                      <label for="quantity[]" class="form-label pb-1">Quantity</label>
+                      <input type="number" class="form-control py-2" name="quantities[]" value="{{ order_product.quantity }}" placeholder="Quantity" style="border-radius: 13px;" />
+                    </div>
+                  </div>
+                  <div class="col-md-1 d-flex align-items-center mt-3">
+                    <button type="button" id="addProductBtn" class="btn btn-success">+</button>
+                    <button type="button" class="btn btn-danger remove-row  ms-2">X</button>
                   </div>
                 </div>
-              </div>
+                </div>
             </form>
             <div class="button" style="padding-top: 5rem;">
               <input id="saveOrderBtn" class="btn btn-primary" type="button" value="Submit" style="width: 158px; height: 44px; border-radius: 16px; background-color: #4365D0; box-shadow: 0px 6px 12px 0px #3F8CFF43;" />
